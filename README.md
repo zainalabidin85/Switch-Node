@@ -51,12 +51,12 @@ relaynode/
 ├── src/
 │    └── main.cpp
 └── data/
-└── www/
-     ├── ap.html # Wi-Fi setup (AP mode)
-     ├── index.html # Main relay control
-     ├── settings.html # MQTT configuration
-     ├── app.js # UI logic
-     └── style.css # Apple-like styling
+     └── www/
+          ├── ap.html # Wi-Fi setup (AP mode)
+          ├── index.html # Main relay control
+          ├── settings.html # MQTT configuration
+          ├── app.js # UI logic
+          └── style.css # Apple-like styling
 ```
 
 ---
@@ -86,7 +86,7 @@ relaynode/
 
 After Wi-Fi setup, access the device via:
 
-http://relaynode-XXXXXX.local
+- http://relaynode-XXXXXX.local
 
 Where XXXXXX is the last 3 bytes of the ESP32 MAC address
 (e.g. relaynode-AB12CD.local)
