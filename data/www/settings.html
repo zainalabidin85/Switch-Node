@@ -1,0 +1,65 @@
+<!doctype html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Settings</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <h2>Settings</h2>
+      <a class="link" href="/">Done</a>
+    </div>
+
+    <div class="card">
+      <div class="row">
+        <span class="label">MQTT</span>
+        <span class="pill dot" id="mqttPill">…</span>
+      </div>
+
+      <label>Enable MQTT</label>
+      <select id="enabled">
+        <option value="0">Off</option>
+        <option value="1">On</option>
+      </select>
+
+      <div class="inline">
+        <div>
+          <label>Broker IP / Host</label>
+          <input id="host" placeholder="192.168.1.10">
+        </div>
+        <div style="max-width:140px">
+          <label>Port</label>
+          <input id="port" placeholder="1883">
+        </div>
+      </div>
+
+      <label>Username</label>
+      <input id="user" placeholder="optional">
+
+      <label>Password</label>
+      <div class="password-wrap">
+        <input id="pass" type="password" placeholder="Leave blank to keep saved">
+        <button class="eye" onclick="togglePass()" type="button" aria-label="Show password">👁</button>
+      </div>
+      <div class="small" id="passhint"></div>
+
+      <label>Command Topic</label>
+      <input id="cmdTopic" placeholder="e.g. myhome/relay1/cmd">
+
+      <label>State Topic (optional)</label>
+      <input id="stateTopic" placeholder="default: <cmdTopic>/state">
+
+      <button class="btn primary" style="margin-top:14px" onclick="saveMqtt()">Save</button>
+      <div id="msg" class="small"></div>
+
+      <div class="notice">
+        Home Assistant: create an MQTT switch using your command/state topics, or extend firmware for discovery.
+      </div>
+    </div>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
