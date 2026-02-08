@@ -1,0 +1,51 @@
+<!doctype html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Setup Wi-Fi</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <h2>Set up Wi-Fi</h2>
+      <span class="pill dot blue">AP Mode</span>
+    </div>
+
+    <div class="card">
+      <div class="notice">
+        Connect this device to your Wi-Fi network.<br>
+        After saving, it will reboot and appear on your router.
+      </div>
+
+      <label>Wi-Fi SSID</label>
+      <input id="ssid" placeholder="Your Wi-Fi name">
+
+      <label>Wi-Fi Password</label>
+      <div class="password-wrap">
+        <input id="pass" type="password" placeholder="Optional (for open Wi-Fi)">
+        <button class="eye" onclick="togglePass()" type="button" aria-label="Show password">👁</button>
+      </div>
+
+      <button class="btn primary" style="margin-top:14px" onclick="saveWifi()">Save & Reboot</button>
+
+      <div id="msg" class="small"></div>
+    </div>
+
+    <div class="card">
+      <div class="row">
+        <span class="label">Tip</span>
+        <span class="value">2.4GHz Wi-Fi</span>
+      </div>
+      <div class="small">
+        If your router has 2.4GHz + 5GHz, choose 2.4GHz for best ESP32 compatibility.
+      </div>
+    </div>
+  </div>
+
+  <script src="/app.js"></script>
+  <script>
+    // AP page uses only WiFi functions
+  </script>
+</body>
+</html>
