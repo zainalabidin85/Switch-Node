@@ -6,60 +6,71 @@
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-  <div class="wrap">
-    <div class="topbar">
-      <h2>Settings</h2>
-      <a class="link" href="/">Done</a>
-    </div>
+<div class="wrap">
+  <div class="card">
+    <h2>MQTT Settings</h2>
 
-    <div class="card">
-      <div class="row">
-        <span class="label">MQTT</span>
-        <span class="pill dot" id="mqttPill">…</span>
-      </div>
+    <form id="mqttForm">
+      <label><input type="checkbox" name="enabled"> Enable MQTT</label>
 
-      <label>Enable MQTT</label>
-      <select id="enabled">
-        <option value="0">Off</option>
-        <option value="1">On</option>
-      </select>
+      <label>Broker</label>
+      <input name="host">
 
-      <div class="inline">
-        <div>
-          <label>Broker IP / Host</label>
-          <input id="host" placeholder="192.168.1.10">
-        </div>
-        <div style="max-width:140px">
-          <label>Port</label>
-          <input id="port" placeholder="1883">
-        </div>
-      </div>
+      <label>Port</label>
+      <input name="port" value="1883">
 
-      <label>Username</label>
-      <input id="user" placeholder="optional">
+      <label>User</label>
+      <input name="user">
 
       <label>Password</label>
-      <div class="password-wrap">
-        <input id="pass" type="password" placeholder="Leave blank to keep saved">
-        <button class="eye" onclick="togglePass()" type="button" aria-label="Show password">👁</button>
+      <div class="pw">
+        <input type="password" name="pass" id="mpass">
+        <button type="button" class="icon-btn" onclick="toggleMPass()">
+          <svg viewBox="0 0 24 24">
+            <path fill="currentColor"
+              d="M12 5c-7 0-11 7-11 7s4 7 11 7 11-7 11-7-4-7-11-7z"/>
+          </svg>
+        </button>
       </div>
-      <div class="small" id="passhint"></div>
 
       <label>Command Topic</label>
-      <input id="cmdTopic" placeholder="e.g. myhome/relay1/cmd">
+      <input name="cmdTopic">
 
       <label>State Topic (optional)</label>
-      <input id="stateTopic" placeholder="default: <cmdTopic>/state">
+      <input name="stateTopic">
 
-      <button class="btn primary" style="margin-top:14px" onclick="saveMqtt()">Save</button>
-      <div id="msg" class="small"></div>
+      <button class="primary">Save</button>
+    </form>
 
-      <div class="notice">
-        Home Assistant: create an MQTT switch using your command/state topics, or extend firmware for discovery.
-      </div>
-    </div>
+    <a href="/" class="link">← Back</a>
   </div>
+</div>
 
-  <script src="/app.js"></script>
+<script>
+function toggleMPass(){
+  const p = document.getElementById('mpass');
+  p.type = p.type === 'password' ? 'text':'password';
+}
+
+async function load(){
+  const r = await fetch('/api/mqtt');
+  const d = await r.json();
+  const f = document.forms[0];
+  f.enabled.checked = d.enabled;
+  f.host.value = d.host;
+  f.port.value = d.port;
+  f.user.value = d.user;
+  f.cmdTopic.value = d.cmdTopic;
+  f.stateTopic.value = d.stateTopic;
+}
+load();
+
+document.getElementById('mqttForm').onsubmit = async e=>{
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  await fetch('/api/mqtt',{method:'POST',body:fd});
+  alert('Saved');
+};
+</script>
 </body>
 </html>
