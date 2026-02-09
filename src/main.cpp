@@ -11,7 +11,7 @@
  *      API: /api/wifi  (save SSID/pass then reboot)
  *
  * Pins:
- *  - Relay GPIO: 26
+ *  - Relay GPIO: 16
  *  - Input GPIO: 25 (INPUT_PULLUP, dry contact to GND)
  *
  * mDNS:
@@ -51,6 +51,9 @@
 static const char* FS_ROOT = "/www";
 static const byte DNS_PORT = 53;
 
+/* Input debounce (dry contact) */
+static const uint32_t INPUT_DEBOUNCE_MS = 50;
+
 AsyncWebServer server(80);
 DNSServer dns;
 
@@ -60,7 +63,11 @@ Preferences prefs;
 
 /* ---------- State ---------- */
 bool relayState = false;
-bool lastInputOpen = true;
+
+/* Dry-contact debounced input state (INPUT_PULLUP) */
+static int  in_last_read   = HIGH;
+static int  in_stable      = HIGH;
+static uint32_t in_last_change_ms = 0;
 
 /* IDs */
 String deviceId;     // e.g. esp32-AB12CD
@@ -121,13 +128,21 @@ static void setRelay(bool on) {
   }
 }
 
-static bool inputIsOpen() { // INPUT_PULLUP: HIGH=open, LOW=pressed(GND)
+/* INPUT_PULLUP: HIGH=open, LOW=closed-to-GND */
+static bool inputIsOpenRaw() {
   return digitalRead(INPUT_PIN) == HIGH;
 }
 
-static void publishInput(bool open) {
+/* Publish input: open->OFF, closed->ON (same as before) */
+static void publishInputOpenBool(bool open) {
   if (!mqtt.connected()) return;
-  mqtt.publish(topicDin.c_str(), open ? "OFF" : "ON", true); // pressed => ON
+  mqtt.publish(topicDin.c_str(), open ? "OFF" : "ON", true);
+}
+
+/* Compute desired relay from stable input */
+static bool desiredRelayFromInputStable() {
+  // closed (LOW) => ON, open (HIGH) => OFF
+  return (in_stable == LOW);
 }
 
 /* ---------- Preferences ---------- */
@@ -205,8 +220,6 @@ static void startAPPortal() {
 
 /* ---------- mDNS ---------- */
 static void startMDNS() {
-  // Start mDNS once connected to STA
-  // If it fails, we just continue without .local support.
   if (MDNS.begin(mdnsHost.c_str())) {
     MDNS.addService("http", "tcp", 80);
     Serial.println("mDNS: http://" + mdnsFqdn + "/");
@@ -222,6 +235,7 @@ static void mqttCallback(char* topic, byte* payload, unsigned int len) {
   for (unsigned int i = 0; i < len; i++) msg += (char)payload[i];
   msg.trim();
 
+  // NOTE: Physical dry-contact is MASTER. Remote commands may be overridden by input.
   if (String(topic) == topicCmd) {
     if (msg.equalsIgnoreCase("ON") || msg == "1" || msg.equalsIgnoreCase("true")) setRelay(true);
     if (msg.equalsIgnoreCase("OFF") || msg == "0" || msg.equalsIgnoreCase("false")) setRelay(false);
@@ -252,13 +266,12 @@ static void mqttEnsureConnected() {
   if (ok) {
     mqtt.subscribe(topicCmd.c_str());
     mqtt.publish(topicState.c_str(), relayState ? "ON" : "OFF", true);
-    publishInput(inputIsOpen());
+    publishInputOpenBool(in_stable == HIGH);
   }
 }
 
 /* ---------- Web routes ---------- */
 static void setupRoutes_AP() {
-  // Captive portal: ANY URL -> ap.html
   server.onNotFound([](AsyncWebServerRequest *r){
     r->send(LittleFS, "/www/ap.html", "text/html");
   });
@@ -267,7 +280,6 @@ static void setupRoutes_AP() {
     r->send(LittleFS, "/www/ap.html", "text/html");
   });
 
-  // Save WiFi + reboot
   server.on("/api/wifi", HTTP_POST, [](AsyncWebServerRequest *r){
     auto v = [&](const char* k)->String{
       if (r->hasParam(k, true)) return r->getParam(k, true)->value();
@@ -291,7 +303,6 @@ static void setupRoutes_AP() {
     ESP.restart();
   });
 
-  // Serve static assets (style/app.js)
   server.serveStatic("/", LittleFS, FS_ROOT);
   server.begin();
 }
@@ -307,14 +318,13 @@ static void setupRoutes_STA() {
 
   server.serveStatic("/", LittleFS, FS_ROOT);
 
-  // Status
   server.on("/api/status", HTTP_GET, [](AsyncWebServerRequest *r){
-    StaticJsonDocument<320> d;
+    StaticJsonDocument<380> d;
     d["ok"] = true;
     d["ip"] = WiFi.localIP().toString();
-    d["mdns"] = mdnsFqdn;                 // <--- show to user/UI
+    d["mdns"] = mdnsFqdn;
     d["relay"] = relayState;
-    d["input_pressed"] = !inputIsOpen();
+    d["input_pressed"] = (in_stable == LOW);     // closed contact = "pressed"
     d["mqtt_enabled"] = mqttCfg.enabled;
     d["mqtt_connected"] = mqtt.connected();
     d["cmd_topic"] = mqttCfg.cmdTopic;
@@ -324,7 +334,6 @@ static void setupRoutes_STA() {
     r->send(200, "application/json", out);
   });
 
-  // Relay set
   server.on("/api/relay", HTTP_POST, [](AsyncWebServerRequest *r){
     if (!r->hasParam("state", true)) {
       r->send(400, "application/json", "{\"ok\":false,\"err\":\"missing_state\"}");
@@ -332,11 +341,13 @@ static void setupRoutes_STA() {
     }
     const String s = r->getParam("state", true)->value();
     const bool on = (s == "1" || s.equalsIgnoreCase("on") || s.equalsIgnoreCase("true"));
+
+    // NOTE: Physical dry-contact is MASTER; loop() will enforce it.
     setRelay(on);
+
     r->send(200, "application/json", "{\"ok\":true}");
   });
 
-  // MQTT GET (password masked)
   server.on("/api/mqtt", HTTP_GET, [](AsyncWebServerRequest *r){
     StaticJsonDocument<420> d;
     d["ok"] = true;
@@ -344,7 +355,7 @@ static void setupRoutes_STA() {
     d["host"] = mqttCfg.host;
     d["port"] = mqttCfg.port;
     d["user"] = mqttCfg.user;
-    d["pass_set"] = mqttCfg.pass.length() > 0;   // <--- do not leak password
+    d["pass_set"] = mqttCfg.pass.length() > 0;
     d["cmdTopic"] = mqttCfg.cmdTopic;
     d["stateTopic"] = mqttCfg.stateTopic;
 
@@ -353,7 +364,6 @@ static void setupRoutes_STA() {
     r->send(200, "application/json", out);
   });
 
-  // MQTT POST (blank pass keeps old)
   server.on("/api/mqtt", HTTP_POST, [](AsyncWebServerRequest *r){
     auto v = [&](const char* k)->String{
       if (r->hasParam(k, true)) return r->getParam(k, true)->value();
@@ -372,7 +382,7 @@ static void setupRoutes_STA() {
     mqttCfg.user = v("user");
 
     const String pass = v("pass");
-    if (pass.length()) mqttCfg.pass = pass;  // keep old if blank
+    if (pass.length()) mqttCfg.pass = pass;
 
     mqttCfg.cmdTopic = v("cmdTopic");
     mqttCfg.stateTopic = v("stateTopic");
@@ -397,20 +407,26 @@ void setup() {
 
   pinMode(RELAY_PIN, OUTPUT);
   pinMode(INPUT_PIN, INPUT_PULLUP);
-  setRelay(false);
-  lastInputOpen = inputIsOpen();
 
   if (!LittleFS.begin(true)) {
     Serial.println("LittleFS mount failed.");
   }
 
   deviceId = macToDeviceId();
-  shortId  = macSuffix6();                 // AB12CD
-  mdnsHost = "relaynode-" + shortId;       // relaynode-AB12CD
-  mdnsFqdn = mdnsHost + ".local";          // relaynode-AB12CD.local
+  shortId  = macSuffix6();
+  mdnsHost = "relaynode-" + shortId;
+  mdnsFqdn = mdnsHost + ".local";
 
   loadWifiCfg();
-  loadMqttCfg(); // also applies topics
+  loadMqttCfg();
+
+  // Initialize debounced input state
+  in_last_read = digitalRead(INPUT_PIN);
+  in_stable = in_last_read;
+  in_last_change_ms = millis();
+
+  // On boot: relay follows dry-contact state
+  setRelay(desiredRelayFromInputStable());
 
   Serial.println("\nDevice ID: " + deviceId);
   Serial.println("mDNS host:  " + mdnsHost);
@@ -439,10 +455,27 @@ void loop() {
   mqttEnsureConnected();
   mqtt.loop();
 
-  const bool nowOpen = inputIsOpen();
-  if (nowOpen != lastInputOpen) {
-    lastInputOpen = nowOpen;
-    publishInput(nowOpen);
+  // ---- Dry contact debounce + enforce relay follows input ----
+  int level = digitalRead(INPUT_PIN); // HIGH=open, LOW=closed
+  uint32_t now = millis();
+
+  if (level != in_last_read) {
+    in_last_read = level;
+    in_last_change_ms = now;
+  }
+
+  // accept stable change after debounce time
+  if ((now - in_last_change_ms) > INPUT_DEBOUNCE_MS && in_stable != in_last_read) {
+    in_stable = in_last_read;
+
+    // publish input state on change
+    publishInputOpenBool(in_stable == HIGH);
+  }
+
+  // continuously enforce: physical switch is master
+  bool desired = desiredRelayFromInputStable();
+  if (relayState != desired) {
+    setRelay(desired);
   }
 
   delay(10);
