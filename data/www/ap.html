@@ -7,45 +7,44 @@
 </head>
 <body>
   <div class="wrap">
-    <div class="topbar">
+    <div class="card">
       <h2>Set up Wi-Fi</h2>
-      <span class="pill dot blue">AP Mode</span>
-    </div>
 
-    <div class="card">
-      <div class="notice">
-        Connect this device to your Wi-Fi network.<br>
-        After saving, it will reboot and appear on your router.
-      </div>
+      <form id="wifiForm">
+        <label>Wi-Fi SSID</label>
+        <input name="ssid" required>
 
-      <label>Wi-Fi SSID</label>
-      <input id="ssid" placeholder="Your Wi-Fi name">
+        <label>Password</label>
+        <div class="pw">
+          <input type="password" name="pass" id="pass">
+          <button type="button" class="icon-btn" onclick="togglePass()">
+            <!-- Eye icon (SVG) -->
+            <svg viewBox="0 0 24 24">
+              <path fill="currentColor"
+                d="M12 5c-7 0-11 7-11 7s4 7 11 7 11-7 11-7-4-7-11-7zm0 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8z"/>
+            </svg>
+          </button>
+        </div>
 
-      <label>Wi-Fi Password</label>
-      <div class="password-wrap">
-        <input id="pass" type="password" placeholder="Optional (for open Wi-Fi)">
-        <button class="eye" onclick="togglePass()" type="button" aria-label="Show password">👁</button>
-      </div>
+        <button class="primary">Save & Reboot</button>
+      </form>
 
-      <button class="btn primary" style="margin-top:14px" onclick="saveWifi()">Save & Reboot</button>
-
-      <div id="msg" class="small"></div>
-    </div>
-
-    <div class="card">
-      <div class="row">
-        <span class="label">Tip</span>
-        <span class="value">2.4GHz Wi-Fi</span>
-      </div>
-      <div class="small">
-        If your router has 2.4GHz + 5GHz, choose 2.4GHz for best ESP32 compatibility.
-      </div>
+      <p class="hint">Device will reboot after saving.</p>
     </div>
   </div>
 
-  <script src="/app.js"></script>
-  <script>
-    // AP page uses only WiFi functions
-  </script>
+<script>
+function togglePass(){
+  const p = document.getElementById('pass');
+  p.type = p.type === 'password' ? 'text' : 'password';
+}
+
+document.getElementById('wifiForm').onsubmit = async e => {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const r = await fetch('/api/wifi', { method:'POST', body:fd });
+  if (r.ok) alert('Saved. Rebooting...');
+};
+</script>
 </body>
 </html>
