@@ -1,5 +1,5 @@
 /**************************************************************
- * ESP32 Single Relay Controller (Revamped Flow + mDNS)
+ * ESP32 Single Relay Controller
  *
  * Flow:
  *  - If STA connect succeeds -> serve:
@@ -43,7 +43,7 @@
 #include <ESPmDNS.h>
 
 /* ---------- GPIO ---------- */
-#define RELAY_PIN 26
+#define RELAY_PIN 16
 #define INPUT_PIN 25
 #define RELAY_ACTIVE_LOW 0
 /* -------------------------- */
