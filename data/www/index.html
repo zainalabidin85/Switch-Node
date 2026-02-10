@@ -1,0 +1,550 @@
+<!doctype html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>SwitchNode</title>
+  <style>
+    /* Reset & Base Styles */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    }
+    
+    body {
+      background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      color: #1d1d1f;
+    }
+    
+    /* Card Container */
+    .wrap {
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+    
+    .card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      border-radius: 20px;
+      padding: 32px 28px;
+      box-shadow: 
+        0 12px 40px rgba(0, 0, 0, 0.08),
+        0 1px 2px rgba(0, 0, 0, 0.05),
+        inset 0 0 0 0.5px rgba(255, 255, 255, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      animation: fadeIn 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+    }
+    
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 36px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    }
+    
+    .header h2 {
+      font-size: 24px;
+      font-weight: 600;
+      letter-spacing: -0.5px;
+      color: #1d1d1f;
+      flex-grow: 1;
+      text-align: center;
+    }
+    
+    .gear {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(3, 3, 3, 0);
+      color: #242425;
+      transition: all 0.25s ease;
+      border: 1px solid rgb(255, 255, 255);
+      text-decoration: none;
+    }
+    
+    .gear:hover {
+      background: rgb(255, 255, 255);
+      color: #2d2d2e;
+      transform: rotate(45deg);
+    }
+    
+    .gear:active {
+      transform: scale(0.95) rotate(45deg);
+    }
+    
+    .gear svg {
+      width: 25px;
+      height: 25px;
+    }
+    
+    /* Big Switch */
+    .big-switch {
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      border: none;
+      margin: 0 auto 36px;
+      display: block;
+      font-size: 28px;
+      font-weight: 600;
+      letter-spacing: -0.5px;
+      cursor: pointer;
+      transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+      position: relative;
+      overflow: hidden;
+      outline: none;
+      box-shadow: 
+        0 10px 30px rgba(0, 0, 0, 0.1),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.8);
+    }
+    
+    .big-switch.off {
+      background: linear-gradient(135deg, #8e8e93, #6d6d71);
+      color: white;
+      box-shadow: 
+        0 10px 30px rgba(142, 142, 147, 0.25),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.8);
+    }
+    
+    .big-switch.on {
+      background: linear-gradient(135deg, #34c759, #2da44e);
+      color: white;
+      box-shadow: 
+        0 10px 30px rgba(52, 199, 89, 0.3),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.8);
+      transform: scale(1.05);
+    }
+    
+    .big-switch::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.3), transparent 70%);
+      pointer-events: none;
+    }
+    
+    .big-switch:hover {
+      transform: scale(1.08);
+      box-shadow: 
+        0 15px 40px rgba(0, 0, 0, 0.15),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.8);
+    }
+    
+    .big-switch.on:hover {
+      box-shadow: 
+        0 15px 40px rgba(52, 199, 89, 0.4),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.8);
+    }
+    
+    .big-switch:active {
+      transform: scale(0.98);
+      transition: transform 0.1s ease;
+    }
+    
+    .big-switch:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: scale(1) !important;
+    }
+    
+    /* Status Pills */
+    .pills {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      margin-top: 32px;
+    }
+    
+    .pill {
+      flex: 1;
+      padding: 18px 16px;
+      border-radius: 16px;
+      text-align: center;
+      font-size: 15px;
+      font-weight: 500;
+      letter-spacing: -0.2px;
+      background: rgba(0, 0, 0, 0.03);
+      color: #8e8e93;
+      border: 1px solid rgba(0, 0, 0, 0.05);
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 90px;
+    }
+    
+    .pill::before {
+      content: attr(data-label);
+      font-size: 13px;
+      font-weight: 400;
+      color: #8e8e93;
+      margin-bottom: 8px;
+      opacity: 0.8;
+    }
+    
+    .pill.on {
+      background: rgba(52, 199, 89, 0.1);
+      color: #2da44e;
+      border-color: rgba(52, 199, 89, 0.2);
+      box-shadow: 0 2px 10px rgba(52, 199, 89, 0.1);
+    }
+    
+    .pill.off {
+      background: rgba(255, 59, 48, 0.1);
+      color: #ff3b30;
+      border-color: rgba(255, 59, 48, 0.2);
+    }
+    
+    .pill#pill-ip {
+      background: rgba(0, 122, 255, 0.1);
+      color: #007aff;
+      border-color: rgba(0, 122, 255, 0.2);
+    }
+    
+    .pill#pill-ip::before {
+      content: 'IP Address';
+    }
+    
+    .pill#pill-mqtt::before {
+      content: 'MQTT Status';
+    }
+    
+    .pill#pill-input::before {
+      content: 'Input Status';
+    }
+    
+    /* Connection Status Indicator */
+    .connection-status {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 24px;
+      padding: 14px;
+      border-radius: 12px;
+      background: rgba(0, 0, 0, 0.02);
+      border: 1px solid rgba(0, 0, 0, 0.05);
+      font-size: 14px;
+      color: #8e8e93;
+      gap: 8px;
+    }
+    
+    .connection-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #ff3b30;
+      animation: pulse 2s infinite;
+    }
+    
+    .connection-dot.connected {
+      background: #34c759;
+      animation: none;
+    }
+    
+    /* Loading Animation */
+    .loading {
+      position: relative;
+    }
+    
+    .loading::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+      animation: loading 1.5s infinite;
+      border-radius: inherit;
+    }
+    
+    /* Animations */
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.98);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    
+    @keyframes loading {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+    
+    @keyframes switchOn {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1.05); }
+    }
+    
+    /* Responsive */
+    @media (max-width: 520px) {
+      .card {
+        padding: 24px 20px;
+      }
+      
+      .big-switch {
+        width: 180px;
+        height: 180px;
+        font-size: 24px;
+      }
+      
+      .pills {
+        flex-direction: column;
+        gap: 12px;
+      }
+      
+      .pill {
+        min-height: 70px;
+        padding: 16px;
+      }
+    }
+    
+    @media (max-width: 380px) {
+      .big-switch {
+        width: 160px;
+        height: 160px;
+        font-size: 22px;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="header">
+      <a href="/settings" class="gear" aria-label="Settings">
+        <!-- Gear icon -->
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="currentColor"
+            d="M12 8a4 4 0 1 0 4 4 4 4 0 0 0-4-4zm9.4 4a7.5 7.5 0 0 0-.1-1l2.1-1.6-2-3.5-2.5 1a7.8 7.8 0 0 0-1.7-1l-.4-2.6h-4l-.4 2.6a7.8 7.8 0 0 0-1.7 1l-2.5-1-2 3.5 2.1 1.6a7.5 7.5 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1a7.8 7.8 0 0 0 1.7 1l.4 2.6h4l.4-2.6a7.8 7.8 0 0 0 1.7-1l2.5 1 2-3.5-2.1-1.6a7.5 7.5 0 0 0 .1-1z"/>
+        </svg>
+      </a>
+      <h2>SwitchNode</h2>
+      <div style="width: 42px;"></div> <!-- Spacer for symmetry -->
+    </div>
+
+    <button id="btn" class="big-switch off" type="button">OFF</button>
+
+    <div class="pills">
+      <span id="pill-ip" class="pill" data-label="IP Address">...</span>
+      <span id="pill-mqtt" class="pill" data-label="MQTT Status">...</span>
+      <span id="pill-input" class="pill" data-label="Input Status">...</span>
+    </div>
+
+    <div class="connection-status">
+      <span id="connection-dot" class="connection-dot"></span>
+      <span id="connection-text">Connecting...</span>
+      <span id="last-update"></span>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Cache elements
+  const btn = document.getElementById('btn');
+  const pillIp = document.getElementById('pill-ip');
+  const pillMqtt = document.getElementById('pill-mqtt');
+  const pillInput = document.getElementById('pill-input');
+  const connectionDot = document.getElementById('connection-dot');
+  const connectionText = document.getElementById('connection-text');
+  const lastUpdate = document.getElementById('last-update');
+
+  let busy = false;
+  let lastUpdateTime = null;
+
+  // Format time since last update
+  function formatTimeSince(date) {
+    if (!date) return '';
+    const seconds = Math.floor((new Date() - date) / 1000);
+    if (seconds < 60) return `${seconds}s ago`;
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+    return `${Math.floor(seconds / 3600)}h ago`;
+  }
+
+  // Update connection status
+  function updateConnectionStatus(connected) {
+    if (connected) {
+      connectionDot.className = 'connection-dot connected';
+      connectionText.textContent = 'Connected to device';
+    } else {
+      connectionDot.className = 'connection-dot';
+      connectionText.textContent = 'Disconnected - retrying...';
+    }
+  }
+
+  // Set button state with animation
+  function setButtonState(on) {
+    const wasOn = btn.classList.contains('on');
+    btn.textContent = on ? 'ON' : 'OFF';
+    btn.className = 'big-switch ' + (on ? 'on' : 'off');
+    
+    // Add animation when state changes
+    if (wasOn !== on) {
+      btn.style.animation = 'switchOn 0.3s ease';
+      setTimeout(() => {
+        btn.style.animation = '';
+      }, 300);
+    }
+  }
+
+  // Set pill state
+  function setPill(el, text, cls) {
+    el.textContent = text;
+    el.className = 'pill ' + (cls || '');
+  }
+
+  // Refresh device status
+  async function refresh() {
+    try {
+      const r = await fetch('/api/status', { 
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+      
+      if (!r.ok) {
+        throw new Error(`HTTP ${r.status}`);
+      }
+      
+      const d = await r.json();
+      
+      // Update UI
+      setButtonState(!!d.relay);
+      setPill(pillIp, d.ip || 'N/A', '');
+      setPill(pillMqtt, 
+        d.mqtt_connected ? 'Connected' : 'Disconnected',
+        d.mqtt_connected ? 'on' : 'off'
+      );
+      setPill(pillInput,
+        d.input_pressed ? 'Active' : 'Inactive',
+        d.input_pressed ? 'on' : 'off'
+      );
+      
+      // Update connection status
+      updateConnectionStatus(true);
+      lastUpdateTime = new Date();
+      
+    } catch (e) {
+      console.warn('Refresh failed:', e.message);
+      updateConnectionStatus(false);
+      
+      // Show loading state on pills
+      [pillIp, pillMqtt, pillInput].forEach(pill => {
+        if (!pill.classList.contains('loading')) {
+          pill.classList.add('loading');
+        }
+      });
+    }
+    
+    // Update last update time
+    if (lastUpdateTime) {
+      lastUpdate.textContent = formatTimeSince(lastUpdateTime);
+    }
+  }
+
+  // Toggle relay state
+  btn.addEventListener('click', async () => {
+    if (busy) return;
+    busy = true;
+    btn.disabled = true;
+
+    // Visual feedback
+    btn.style.opacity = '0.8';
+
+    // Determine new state
+    const turnOn = btn.classList.contains('off');
+
+    try {
+      const r = await fetch('/api/relay', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Accept': 'application/json'
+        },
+        body: 'state=' + (turnOn ? 1 : 0)
+      });
+      
+      if (!r.ok) {
+        throw new Error(`HTTP ${r.status}`);
+      }
+      
+      // Refresh to get actual state from server
+      await refresh();
+      
+    } catch (error) {
+      console.error('Toggle failed:', error);
+      // Show error briefly
+      const originalText = btn.textContent;
+      btn.textContent = 'Error!';
+      setTimeout(() => {
+        btn.textContent = originalText;
+      }, 1000);
+    } finally {
+      busy = false;
+      btn.disabled = false;
+      btn.style.opacity = '1';
+    }
+  });
+
+  // Initialize
+  document.addEventListener('DOMContentLoaded', () => {
+    // Start periodic refresh
+    refresh();
+    setInterval(refresh, 2000);
+    
+    // Remove loading state after first successful load
+    setTimeout(() => {
+      [pillIp, pillMqtt, pillInput].forEach(pill => {
+        pill.classList.remove('loading');
+      });
+    }, 100);
+    
+    // Update time since last update every minute
+    setInterval(() => {
+      if (lastUpdateTime) {
+        lastUpdate.textContent = formatTimeSince(lastUpdateTime);
+      }
+    }, 60000);
+  });
+
+  // Add keyboard support
+  document.addEventListener('keydown', (e) => {
+    if (e.code === 'Space' || e.code === 'Enter') {
+      if (document.activeElement === btn) {
+        btn.click();
+      }
+    }
+  });
+</script>
+</body>
+</html>
