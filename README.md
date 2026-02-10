@@ -5,10 +5,16 @@ RelayNode is a **product-style ESP32 firmware** for controlling a single relay a
 It is designed with a **clean Apple-like UX**, robust recovery flow, and seamless integration with **Home Assistant via MQTT**.
 
 ---
+## Materials
+1. ESP32
+2. Relay
+   
+
+---
 
 ## ✨ Key Features
 
-- 🔌 **1 Relay Output** (GPIO 26)// or other IO pin
+- 🔌 **1 Relay Output** (GPIO 16) or other IO pin
 - 🔘 **1 Digital Input** (GPIO 25, dry contact to GND, internal pull-up)
 - 📶 **AP Setup Mode** (no hardcoded Wi-Fi)
 - 🌐 **Minimal Web UI**
@@ -85,26 +91,20 @@ relaynode/
 ## 🌍 Accessing the Device
 
 After Wi-Fi setup, access the device via:
-
 - http://relaynode-XXXXXX.local
-
-Where XXXXXX is the last 3 bytes of the ESP32 MAC address
-(e.g. relaynode-AB12CD.local)
+  - Where XXXXXX is the last 3 bytes of the ESP32 MAC address
+  - (e.g. relaynode-AB12CD.local)
 
 If mDNS is not available:
-
-Check your router’s device list
-
-Look for RelayNode-esp32-AB12CD
+  - Check your router’s device list
+  - Look for RelayNode-esp32-AB12CD
 
 ---
 ## 📡 MQTT Integration
 MQTT Topics (example)
 
 If user configures:
-
-Command Topic: myhome/relay1/cmd
-
+  - Command Topic: myhome/relay1/cmd
 
 The device uses:
 ```
