@@ -7,8 +7,8 @@ It is designed with a **clean Apple-like UX**, robust recovery flow, and seamles
 ---
 ## Materials
 1. ESP32
-2. Relay
-   
+2. Relay\
+![esp32 with relay](/images/Esp32Relay1.png)
 
 ---
 
