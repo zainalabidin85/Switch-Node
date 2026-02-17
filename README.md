@@ -88,6 +88,9 @@ relaynode/
 - PlatformIO (VS Code)
 - ESP32 board
 - USB cable
+- easy flash
+  - download factory.bin
+  - use esphome web (https://web.esphome.io/) to flash factory.bin into esp32
 
 ---
 ## 🌍 Accessing the Device
