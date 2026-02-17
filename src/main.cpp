@@ -72,8 +72,8 @@ static uint32_t in_last_change_ms = 0;
 /* IDs */
 String deviceId;     // e.g. esp32-AB12CD
 String shortId;      // e.g. AB12CD
-String mdnsHost;     // e.g. relaynode-AB12CD
-String mdnsFqdn;     // e.g. relaynode-AB12CD.local
+String mdnsHost;     // e.g. switchnode-AB12CD
+String mdnsFqdn;     // e.g. switchnode-AB12CD.local
 
 /* ---------- WiFi config (stored by us) ---------- */
 struct WifiCfg {
@@ -206,7 +206,7 @@ static bool connectSTA(uint32_t timeoutMs = 20000) {
 }
 
 static void startAPPortal() {
-  const String apSsid = "RelayNode-" + deviceId; // matches label user saw before
+  const String apSsid = "SwitchNode-" + deviceId; // matches label user saw before
   WiFi.mode(WIFI_AP);
   WiFi.softAP(apSsid.c_str(), nullptr); // open AP
   delay(200);
@@ -414,7 +414,7 @@ void setup() {
 
   deviceId = macToDeviceId();
   shortId  = macSuffix6();
-  mdnsHost = "relaynode-" + shortId;
+  mdnsHost = "switchnode-" + shortId;
   mdnsFqdn = mdnsHost + ".local";
 
   loadWifiCfg();
