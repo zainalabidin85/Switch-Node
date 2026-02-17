@@ -15,7 +15,7 @@
  *  - Input GPIO: 25 (INPUT_PULLUP, dry contact to GND)
  *
  * mDNS:
- *  - Unique hostname: relaynode-XXXXXX.local  (XXXXXX = last 6 hex of MAC)
+ *  - Unique hostname: switchnode-XXXXXX.local  (XXXXXX = last 6 hex of MAC)
  *  - Sets WiFi hostname to match
  *  - Adds http service on tcp/80
  *  - Exposed in /api/status as "mdns"
