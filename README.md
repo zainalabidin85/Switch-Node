@@ -7,8 +7,9 @@ It is designed with a **clean Apple-like UX**, robust recovery flow, and seamles
 ---
 ## Materials
 1. ESP32
-2. Relay\
-![esp32 with relay](/images/Esp32Relay1.png)
+2. Relay
+   
+![esp32 with relay](/image/Esp32Relay1.png)
 
 ---
 
@@ -71,7 +72,7 @@ relaynode/
 
 | Function        | GPIO |
 |-----------------|------|
-| Relay Output    | 26   |
+| Relay Output    | 16   |
 | Digital Input   | 25   |
 
 - Digital input uses `INPUT_PULLUP`
@@ -94,6 +95,7 @@ After Wi-Fi setup, access the device via:
 - http://relaynode-XXXXXX.local
   - Where XXXXXX is the last 3 bytes of the ESP32 MAC address
   - (e.g. relaynode-AB12CD.local)
+- ![Web-Ui](image/screenshort.png)
 
 If mDNS is not available:
   - Check your router’s device list
