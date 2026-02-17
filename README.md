@@ -1,3 +1,4 @@
+![intro](image/NotebookLM.png)
 # ESP32 SwitchNode  
 **Single Relay + Digital Input with AP Setup, Web UI, MQTT & mDNS**
 
