@@ -23,7 +23,7 @@ It is designed with a **clean Apple-like UX**, robust recovery flow, and seamles
   - Main control page (relay only)
   - Settings page (MQTT configuration)
 - 📡 **mDNS Support**
-  - Access device via `relaynode-XXXXXX.local`
+  - Access device via `switchnode-XXXXXX.local`
 - 🔁 **Automatic AP fallback**
   - If Wi-Fi fails, device returns to setup mode
 - 🔐 **Secure MQTT configuration**
@@ -37,13 +37,13 @@ It is designed with a **clean Apple-like UX**, robust recovery flow, and seamles
 
 ### First Boot / Wi-Fi Failure
 1. Device starts in **Access Point (AP) mode**
-2. Creates Wi-Fi: RelayNode-esp32-xxxxxx
+2. Creates Wi-Fi: SwitchNode-esp32-xxxxxx
 3. Captive portal opens automatically
 4. User enters Wi-Fi credentials
 5. Device reboots and connects to Wi-Fi
 
 ### Normal Operation
-- Open browser: http://relaynode-xxxxxx.local
+- Open browser: http://switchnode-xxxxxx.local
 - Control relay instantly
 - Tap ⚙️ icon to configure MQTT
 
@@ -96,14 +96,14 @@ relaynode/
 ## 🌍 Accessing the Device
 
 After Wi-Fi setup, access the device via:
-- http://relaynode-XXXXXX.local
+- http://switchnode-XXXXXX.local
   - Where XXXXXX is the last 3 bytes of the ESP32 MAC address
-  - (e.g. relaynode-AB12CD.local)
+  - (e.g. switchynode-AB12CD.local)
 - ![Web-Ui](image/screenshort.png)
 
 If mDNS is not available:
   - Check your router’s device list
-  - Look for RelayNode-esp32-AB12CD
+  - Look for SwitchNode-esp32-AB12CD
 
 ---
 ## 📡 MQTT Integration
