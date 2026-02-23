@@ -97,6 +97,13 @@
       color: #c7c7cc;
     }
     
+    input:disabled {
+      background: #f5f5f7;
+      color: #86868b;
+      border-color: #d2d2d7;
+      cursor: not-allowed;
+    }
+    
     /* Password Field */
     .pw {
       position: relative;
@@ -156,13 +163,13 @@
       box-shadow: 0 4px 14px rgba(0, 122, 255, 0.3);
     }
     
-    .primary:hover {
+    .primary:hover:not(:disabled) {
       background: linear-gradient(135deg, #0056d6, #0041a8);
       transform: translateY(-1px);
       box-shadow: 0 6px 18px rgba(0, 122, 255, 0.4);
     }
     
-    .primary:active {
+    .primary:active:not(:disabled) {
       transform: translateY(0);
       box-shadow: 0 2px 8px rgba(0, 122, 255, 0.3);
     }
@@ -172,6 +179,7 @@
       cursor: not-allowed;
       transform: none;
       box-shadow: none;
+      opacity: 0.7;
     }
     
     /* Status Message */
@@ -182,6 +190,7 @@
       font-size: 14px;
       text-align: center;
       display: none;
+      font-weight: 500;
     }
     
     .status.success {
@@ -195,6 +204,13 @@
       background: rgba(255, 59, 48, 0.1);
       color: #ff3b30;
       border: 1px solid rgba(255, 59, 48, 0.2);
+      display: block;
+    }
+    
+    .status.info {
+      background: rgba(0, 122, 255, 0.1);
+      color: #007aff;
+      border: 1px solid rgba(0, 122, 255, 0.2);
       display: block;
     }
     
@@ -223,11 +239,7 @@
       border-radius: 50%;
       border-top-color: white;
       animation: spin 0.8s linear infinite;
-      margin: 0 auto 8px;
-    }
-    
-    .primary.loading {
-      pointer-events: none;
+      margin: 0 auto;
     }
     
     .primary.loading .btn-text {
@@ -274,6 +286,7 @@
       color: #1d1d1f;
       font-weight: 500;
       font-size: 15px;
+      word-break: break-all;
     }
     
     /* Responsive */
@@ -300,7 +313,7 @@
       
       <div class="device-info">
         <p>Device Information</p>
-        <div class="device-id">relayNode-deviceID.local</div>
+        <div class="device-id" id="deviceId">switchnode-xxxx.local</div>
       </div>
       
       <form id="wifiForm">
@@ -325,14 +338,14 @@
               type="password" 
               name="pass" 
               id="pass" 
-              placeholder="Enter Wi-Fi password"
+              placeholder="Enter Wi-Fi password (leave empty if open network)"
               autocomplete="off"
             >
             <button type="button" class="icon-btn" onclick="togglePass()" aria-label="Show password">
               <!-- Eye icon (SVG) -->
-              <svg viewBox="0 0 24 24">
-                <path fill="currentColor"
-                  d="M12 5c-7 0-11 7-11 7s4 7 11 7 11-7 11-7-4-7-11-7zm0 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8z"/>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
               </svg>
             </button>
           </div>
@@ -347,7 +360,7 @@
       </form>
       
       <p class="hint">
-        Access Dashboard at <strong>relayNode-deviceID.local</strong>
+        After connecting, access dashboard at <strong id="mdnsHint">switchnode-xxxxx.local</strong>
       </p>
     </div>
   </div>
@@ -359,13 +372,13 @@
     const submitBtn = document.getElementById('submitBtn');
     const statusEl = document.getElementById('status');
     const ssidInput = document.getElementById('ssid');
+    const deviceIdEl = document.getElementById('deviceId');
+    const mdnsHint = document.getElementById('mdnsHint');
     
     // Toggle password visibility
     function togglePass() {
       const type = passInput.getAttribute('type') === 'password' ? 'text' : 'password';
       passInput.setAttribute('type', type);
-      
-      // Update button aria-label
       const iconBtn = passInput.nextElementSibling;
       iconBtn.setAttribute('aria-label', type === 'password' ? 'Show password' : 'Hide password');
     }
@@ -374,30 +387,50 @@
     function showStatus(message, type = 'success') {
       statusEl.textContent = message;
       statusEl.className = `status ${type}`;
-      
-      // Hide after 5 seconds for success messages
-      if (type === 'success') {
-        setTimeout(() => {
-          statusEl.className = 'status';
-        }, 5000);
-      }
     }
     
-    // Simulate network scanning on load
-    window.addEventListener('load', () => {
-      // This would normally be an API call to get available networks
-      console.log('Page loaded - ready for Wi-Fi setup');
-      
-      // Focus on first input
-      ssidInput.focus();
-    });
+    // Fetch device info on load
+    async function fetchDeviceInfo() {
+      try {
+        const response = await fetch('/api/status');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.mdns) {
+            deviceIdEl.textContent = data.mdns;
+            mdnsHint.textContent = data.mdns;
+          }
+        }
+      } catch (e) {
+        console.log('Could not fetch device info, using default');
+        // Try to get device ID from AP name as fallback
+        const apName = document.title;
+        const match = apName.match(/SwitchNode-(.+)/);
+        if (match) {
+          const id = match[1].toLowerCase();
+          deviceIdEl.textContent = `switchnode-${id}.local`;
+          mdnsHint.textContent = `switchnode-${id}.local`;
+        }
+      }
+    }
+
+    // Add this to ap.html to fetch and display networks
+    async function scanNetworks() {
+      try {
+        const response = await fetch('/api/scan');
+        const networks = await response.json();
+        // Populate a dropdown or list
+      } catch (e) {
+        console.log('Scan failed');
+      }
+    }
     
     // Form submission
     wifiForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       
       // Validate form
-      if (!ssidInput.value.trim()) {
+      const ssid = ssidInput.value.trim();
+      if (!ssid) {
         showStatus('Please enter a Wi-Fi network name', 'error');
         ssidInput.focus();
         return;
@@ -406,53 +439,100 @@
       // Show loading state
       submitBtn.classList.add('loading');
       submitBtn.disabled = true;
+      showStatus('Saving Wi-Fi credentials...', 'info');
       
-      // Get form data
-      const formData = new FormData(wifiForm);
+      // Get password (can be empty for open networks)
+      const pass = passInput.value;
       
       try {
-        // In a real implementation, this would be an actual API call
-        // For demo purposes, we'll simulate the API call
-        console.log('Submitting Wi-Fi credentials:', {
-          ssid: formData.get('ssid'),
-          pass: formData.get('pass') ? '••••••••' : '(no password)'
+        // Create URL encoded form data for ESP32
+        const urlEncodedData = new URLSearchParams();
+        urlEncodedData.append('ssid', ssid);
+        urlEncodedData.append('pass', pass);
+        
+        console.log('Sending to ESP32:', {
+          ssid: ssid,
+          pass: pass ? '••••••••' : '(no password)'
         });
         
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        // Make the actual API call to ESP32
+        const response = await fetch('/api/wifi', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: urlEncodedData.toString()
+        });
         
-        // Mock response - in reality you would use:
-        // const response = await fetch('/api/wifi', { method: 'POST', body: formData });
+        let data;
+        try {
+          data = await response.json();
+        } catch (e) {
+          console.error('Failed to parse JSON response:', e);
+          throw new Error('Invalid response from device');
+        }
         
-        // Show success message
-        showStatus('Wi-Fi credentials saved. Device is now rebooting...', 'success');
+        console.log('ESP32 response:', data);
         
-        // Reset form after successful submission
-        setTimeout(() => {
-          wifiForm.reset();
+        if (data.ok) {
+          showStatus('✓ Wi-Fi credentials saved! Device is rebooting...', 'success');
+          
+          // Disable form (device will reboot)
+          ssidInput.disabled = true;
+          passInput.disabled = true;
+          
+          // Show countdown
+          let seconds = 5;
+          const countdown = setInterval(() => {
+            if (seconds > 0) {
+              showStatus(`Device rebooting in ${seconds} seconds...`, 'info');
+              seconds--;
+            } else {
+              clearInterval(countdown);
+              showStatus('Rebooting... Please reconnect to your Wi-Fi network', 'info');
+            }
+          }, 1000);
+          
+          // After 6 seconds, try to redirect to the device's mDNS address
+          setTimeout(() => {
+            const mdnsAddress = deviceIdEl.textContent;
+            window.location.href = `http://${mdnsAddress}`;
+          }, 6000);
+          
+        } else {
+          const errorMsg = data.err || 'Failed to save credentials';
+          showStatus('✗ Error: ' + errorMsg, 'error');
           submitBtn.classList.remove('loading');
           submitBtn.disabled = false;
-          ssidInput.focus();
-        }, 3000);
+        }
         
       } catch (error) {
         console.error('Error:', error);
-        showStatus('Failed to save Wi-Fi settings. Please try again.', 'error');
+        showStatus('✗ Failed to connect to device. Please try again.', 'error');
         submitBtn.classList.remove('loading');
         submitBtn.disabled = false;
       }
     });
     
-    // Add subtle interaction effects
-    document.querySelectorAll('input').forEach(input => {
-      // Add focus effect
-      input.addEventListener('focus', function() {
-        this.parentElement.classList.add('focused');
-      });
-      
-      input.addEventListener('blur', function() {
-        this.parentElement.classList.remove('focused');
-      });
+    // Load device info when page loads
+    window.addEventListener('load', () => {
+      ssidInput.focus();
+      fetchDeviceInfo();
+    });
+    
+    // Add enter key support
+    ssidInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        passInput.focus();
+      }
+    });
+    
+    passInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        wifiForm.dispatchEvent(new Event('submit'));
+      }
     });
   </script>
 </body>
